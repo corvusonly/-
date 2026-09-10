@@ -463,30 +463,6 @@
         margin-top: 16px;
         font-size: 13px;
     }
-    .peacock-walk-wrap{
-        position:fixed;
-        bottom:10px;
-        left:0;
-        width:100%;
-        height:90px;
-        pointer-events:none;
-        overflow:hidden;
-        z-index:15;
-        display:none;
-    }
-    #pageMain.active ~ .peacock-walk-wrap{
-        display:block;
-    }
-    .peacock-gif{
-        position:absolute;
-        width:80px;
-        height:auto;
-        animation:peacockMove 28s linear infinite;
-    }
-    @keyframes peacockMove{
-        0%{transform:translateX(-100px);}
-        100%{transform:translateX(calc(100vw + 100px));}
-    }
     .album-complete-overlay{
         position:fixed;
         inset:0;
@@ -515,7 +491,6 @@
         background-image:url("data:image/svg+xml,%3Csvg width='90' height='90' viewBox='0 0 90 90' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cpattern id='peacockFeather' width='20' height='20' patternUnits='userSpaceOnUse'%3E%3Cpath d='M0,10 Q5,2 10,10 T20,10' fill='none' stroke='%23d1a658' stroke-width='1' opacity='0.4'/%3E%3Ccircle cx='10' cy='10' r='2' fill='%23d1a658' opacity='0.3'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='90' height='90' fill='url(%23peacockFeather)'/%3E%3C/svg%3E");
         background-origin:border-box;
         flex-shrink:0;
-        image-rendering:pixelated;
     }
     .pixel-square-avatar img{
         width:100%;
@@ -527,7 +502,6 @@
         border-image: linear-gradient(135deg,#b89458,#e6c275,#8c6b3b) 4;
         border-radius:6px;
         padding:6px;
-        image-rendering:pixelated;
     }
     .parchment-inner{
         background:linear-gradient(145deg,#e9ddc0,#d8c6a0);
@@ -609,7 +583,6 @@
             <div class="divider-ornate"></div>
             <button class="btn" onclick="startDrawProcess()">单次祈愿抽卡</button>
             <button class="btn" onclick="openAlbum()">卡牌图鉴</button>
-            <!--【新增按钮】观看彩蛋视频，获得10次祈愿 -->
             <button class="btn" onclick="openEasterVideo()">观看广告以获得次数</button>
             <div class="divider-ornate"></div>
             <div style="color:#d4b888">剩余祈愿次数：<span id="drawTicket">15</span></div>
@@ -656,7 +629,7 @@
     <div class="modal-card-box">
         <img id="modalBigImg">
         <div class="modal-card-name" id="modalCardName"></div>
-        <div class="modal-card-rarity" id="modalCardRarity"></div>
+        <div class="modal-rarity" id="modalCardRarity"></div>
         <div class="close-modal-tip">点击任意位置关闭</div>
     </div>
 </div>
@@ -667,17 +640,11 @@
     </video>
     <div class="video-close-tip">视频播放完毕自动获得10次祈愿；点击视频外黑色区域关闭弹窗</div>
 </div>
-
 <div class="bgm-toggle-btn" onclick="toggleHomeBGM()">🔊</div>
-<div class="peacock-walk-wrap">
-    <!-- 替换为你的像素孔雀GIF直链 -->
-    <img class="peacock-gif" src="PEACOCK_GIF_LINK">
-</div>
 <div class="album-complete-overlay" id="completeEasterOverlay">
     <div class="album-complete-box">
         <div class="pixel-square-avatar">
-            <!-- 替换头像图片链接 -->
-            < img src="./assets/img/avatar.png">
+            <img src="./assets/img/avatar.png">
         </div>
         <div class="parchment-dialog">
             <div class="parchment-inner">
@@ -718,13 +685,18 @@ const cardAudioList = {
 };
 let currentCardVoice = null;
 let modalPlayingCard = null;
+//初始抽卡次数
 let drawTicket = 18;
 const ticketDom = document.getElementById("drawTicket");
+ticketDom.innerText = drawTicket;
 
 //====【新增彩蛋视频JS变量】====
 const videoEasterOverlay = document.getElementById("videoEasterOverlay");
 const easterVideoPlayer = document.getElementById("easterVideoPlayer");
 let videoWatchCompleteRewardGiven = false;
+let bgmWasPlayingBeforeVideo = false;
+//集齐彩蛋只弹出一次标记
+let albumCompleteHasShown = false;
 
 // 统一暂停主BGM（所有非首页操作都会调用，且无自动恢复）
 function pauseMainBGM() {
@@ -802,6 +774,40 @@ function stopAllCardAudio() {
     stopDrawCardAudio();
     stopModalCardAudio();
 }
+
+//====【修复：彩蛋视频逻辑函数，处理BGM冲突】====
+//打开视频弹窗
+function openEasterVideo(){
+    videoWatchCompleteRewardGiven = false;
+    easterVideoPlayer.currentTime = 0;
+    bgmWasPlayingBeforeVideo = homeBgmStatus;
+    if(bgmWasPlayingBeforeVideo){
+        homeBgm.pause();
+    }
+    easterVideoPlayer.play().catch(e=>console.log("视频播放触发需要用户交互"));
+    videoEasterOverlay.classList.add("open");
+}
+//视频播放结束事件：给+10抽卡
+easterVideoPlayer.onended = function(){
+    if(!videoWatchCompleteRewardGiven){
+        videoWatchCompleteRewardGiven = true;
+        drawTicket += 10;
+        ticketDom.innerText = drawTicket;
+        alert("观看完毕！获得10次祈愿次数！");
+    }
+};
+//点击黑色遮罩关闭视频弹窗，恢复之前BGM状态
+videoEasterOverlay.onclick = function(ev){
+    if(ev.target === videoEasterOverlay){
+        easterVideoPlayer.pause();
+        videoEasterOverlay.classList.remove("open");
+        if(bgmWasPlayingBeforeVideo && audioUnlocked){
+            homeBgm.loop=true;
+            homeBgm.play().catch(e=>{});
+        }
+    }
+};
+
 //抽卡权重
 const WEIGHT_SR = 9;
 const WEIGHT_SSR = 7;
@@ -846,30 +852,6 @@ modalOverlay.onclick = function(){
     modalOverlay.classList.remove("open");
     stopModalCardAudio();
 }
-//====【新增：彩蛋视频逻辑函数】====
-//打开视频弹窗
-function openEasterVideo(){
-    videoWatchCompleteRewardGiven = false;
-    easterVideoPlayer.currentTime = 0;
-    easterVideoPlayer.play().catch(e=>console.log("视频播放触发需要用户交互"));
-    videoEasterOverlay.classList.add("open");
-}
-//视频播放结束事件：给+10抽卡
-easterVideoPlayer.onended = function(){
-    if(!videoWatchCompleteRewardGiven){
-        videoWatchCompleteRewardGiven = true;
-        drawTicket += 10;
-        ticketDom.innerText = drawTicket;
-        alert("观看完毕！获得10次祈愿次数！");
-    }
-};
-//点击黑色遮罩关闭视频弹窗
-videoEasterOverlay.onclick = function(ev){
-    if(ev.target === videoEasterOverlay){
-        easterVideoPlayer.pause();
-        videoEasterOverlay.classList.remove("open");
-    }
-};
 
 function hideAllPage() {
     document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
@@ -992,11 +974,12 @@ function resetFlipBackHome() {
     resetCardFlip();
     setTimeout(() => backMainPage(), 600);
 }
-//检测集齐卡牌彩蛋
+//检测集齐卡牌彩蛋：只弹出一次
 function checkAllCardComplete(){
     const normalCardList = cardDatabase.filter(item=>item.isNormalCard).map(c=>c.name);
     const collectedNormal = Object.keys(cardAlbumData).filter(name=>normalCardList.includes(name));
-    if(collectedNormal.length >= normalCardList.length){
+    if(collectedNormal.length >= normalCardList.length && !albumCompleteHasShown){
+        albumCompleteHasShown = true;
         setTimeout(()=>{
             completeEasterOverlay.classList.add("open");
         },400);
