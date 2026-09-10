@@ -345,17 +345,17 @@
         letter-spacing: 3px;
     }
     .card-front-face {
-        background: #ffffff;
+        background: #221a10;
         transform: rotateY(180deg);
         border: 1px solid #c9b48c;
         aspect-ratio: 5 / 8;
+        overflow: hidden;
     }
     .card-front-face img {
         width: 100%;
         height: 100%;
-        object-fit: cover;
-        /* 保持原图像素，手机PC都不变形；GIF自动播放 */
-    }
+        object-fit: contain;
+        background-color:#1a140c;
     }
     .draw-result-info {
         margin-top: 12px;
@@ -385,15 +385,24 @@
         padding: 10px;
         cursor: pointer;
         transition: 0.25s ease;
+        display:flex;
+        flex-direction:column;
     }
     .album-card:hover {
         transform: translateY(-6px);
         box-shadow: 0 8px 16px rgba(130,100,50,0.25);
     }
-    .album-card img {
+    .album-card-media{
+        width:100%;
+        aspect-ratio:5/8;
+        position:relative;
+        overflow:hidden;
+    }
+    .album-card-media img {
         width: 100%;
-        aspect-ratio: 5 / 8;
-        object-fit: cover;
+        height: 100%;
+        object-fit: contain;
+        background-color:#1a140c;
         border-radius: 8px;
     }
     .album-card-name {
@@ -434,7 +443,8 @@
     .modal-card-box img {
         width: 100%;
         aspect-ratio: 5 / 8;
-        object-fit: cover;
+        object-fit: contain;
+        background-color:#1a140c;
         border-radius: 14px;
         border: 2px solid #d1a658;
     }
@@ -542,9 +552,6 @@
         .album-grid {
             grid-template-columns: repeat(3, 1fr);
             gap: 14px;
-        }
-        .album-card img {
-            height: 160px;
         }
         .shuffle-stage {
             width: 360px;
@@ -671,19 +678,17 @@ const cardAudioList = {
     "毗湿摩":{src:"./bishimaBGM.mp3",vol:0.4},
     "难敌":{src:"./nandiBGM.mp3",vol:0.4},
     "奎师那":{src:"./kuishinaBGM.mp3",vol:0.4},
-    "隐藏卡A迦尔纳":{src:"./jiahidden.mp3",vol:0.4},
-    "隐藏卡B难敌":{src:"./nanhidden.mp3",vol:0.4},
+    "迦尔纳-犬":{src:"./jiahidden.mp3",vol:0.4},
+    "难敌-猫":{src:"./nanhidden.mp3",vol:0.4},
 };
 let currentCardVoice = null;
 let modalPlayingCard = null;
 let drawTicket = 15;
 const ticketDom = document.getElementById("drawTicket");
-
 // 统一暂停主BGM（所有非首页操作都会调用，且无自动恢复）
 function pauseMainBGM() {
     homeBgm.pause();
 }
-
 // 仅切回首页专用恢复函数，其余地方一律不调用
 function onlyHomeResumeBGM() {
     if (audioUnlocked && homeBgmStatus) {
@@ -691,7 +696,6 @@ function onlyHomeResumeBGM() {
         homeBgm.play().catch(e => console.log("BGM恢复异常", e));
     }
 }
-
 // 页面任意点击解锁音频（仅执行一次，兼容移动端）
 async function unlockAudioOnce() {
     if (audioUnlocked) return;
@@ -704,7 +708,6 @@ async function unlockAudioOnce() {
     }
 }
 document.addEventListener("click", unlockAudioOnce, { once: true });
-
 // 右下角喇叭开关（手动控制，不影响页面规则）
 function toggleHomeBGM() {
     if (!audioUnlocked) {
@@ -720,14 +723,12 @@ function toggleHomeBGM() {
         homeBgmStatus = true;
     }
 }
-
 // 播放抽卡音效：仅暂停BGM，结束无任何恢复逻辑
 function playDrawAudio() {
     pauseMainBGM();
     drawAnimAudio.currentTime = 0;
     drawAnimAudio.play().catch(e => {});
 }
-
 // 抽卡结果卡牌语音：播放完毕也不恢复BGM
 function playCardMusic(cardName) {
     stopDrawCardAudio();
@@ -739,7 +740,6 @@ function playCardMusic(cardName) {
     audio.play().catch(e => console.log("卡牌音频播放异常：", e));
     currentCardVoice = audio;
 }
-
 // 停止抽卡页面语音（仅停止音频，不恢复BGM）
 function stopDrawCardAudio() {
     if (currentCardVoice) {
@@ -748,7 +748,6 @@ function stopDrawCardAudio() {
         currentCardVoice = null;
     }
 }
-
 // 停止图鉴弹窗语音（仅停止音频，不恢复BGM）
 function stopModalCardAudio() {
     if (modalPlayingCard) {
@@ -757,19 +756,16 @@ function stopModalCardAudio() {
         modalPlayingCard = null;
     }
 }
-
 // 全部卡牌语音强制停止
 function stopAllCardAudio() {
     stopDrawCardAudio();
     stopModalCardAudio();
 }
-
 //抽卡权重
 const WEIGHT_SR = 9;
 const WEIGHT_SSR = 7;
 const WEIGHT_UR = 5;
 const WEIGHT_HIDDEN = 4;
-
 const cardDatabase = [
     { name: "般度", rarity: "SR", img: "./assets/img/bandu.png", weight: WEIGHT_SR, isNormalCard:true },
     { name: "沙恭尼", rarity: "SR", img: "./assets/img/shagongni.gif", weight: WEIGHT_SR, isNormalCard:true },
@@ -780,13 +776,12 @@ const cardDatabase = [
     { name: "毗湿摩", rarity: "SSR", img: "./assets/img/bishima.png", weight: WEIGHT_SSR, isNormalCard:true },
     { name: "难敌", rarity: "SSR", img: "./assets/img/nandi.png", weight: WEIGHT_SSR, isNormalCard:true },
     { name: "奎师那", rarity: "UR", img: "./assets/img/kuishina.jpg", weight: WEIGHT_UR, isNormalCard:true },
-    { name: "隐藏卡A迦尔纳", rarity: "HIDDEN", img: "./assets/img/hide_a.gif", weight: WEIGHT_HIDDEN, isNormalCard:false },
-    { name: "隐藏卡B难敌", rarity: "HIDDEN", img: "./assets/img/hide_b.gif", weight: WEIGHT_HIDDEN, isNormalCard:false }
+    { name: "迦尔纳-犬", rarity: "HIDDEN", img: "./assets/img/hide_a.gif", weight: WEIGHT_HIDDEN, isNormalCard:false },
+    { name: "难敌-猫", rarity: "HIDDEN", img: "./assets/img/hide_b.gif", weight: WEIGHT_HIDDEN, isNormalCard:false }
 ];
 let cardAlbumData = {};
 let getCurrentCard = null;
 let obtainOrder = [];
-
 //DOM元素缓存
 const flipCardDom = document.getElementById("flipCardDom");
 const resultCardImg = document.getElementById("resultCardImg");
@@ -801,22 +796,18 @@ const modalBigImg = document.getElementById("modalBigImg");
 const modalCardName = document.getElementById("modalCardName");
 const modalCardRarity = document.getElementById("modalCardRarity");
 const completeEasterOverlay = document.getElementById("completeEasterOverlay");
-
 //彩蛋弹窗关闭
 completeEasterOverlay.onclick = function(){
     completeEasterOverlay.classList.remove("open");
 }
-
 //图鉴弹窗关闭：只停卡牌音频，绝不恢复BGM
 modalOverlay.onclick = function(){
     modalOverlay.classList.remove("open");
     stopModalCardAudio();
 }
-
 function hideAllPage() {
     document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
 }
-
 // 返回首页：停止所有卡牌音 + 唯一一处恢复BGM
 function backMainPage() {
     hideAllPage();
@@ -825,7 +816,6 @@ function backMainPage() {
     onlyHomeResumeBGM();
     checkAllCardComplete();
 }
-
 // 打开图鉴：强制暂停BGM，全程不恢复
 function openAlbum() {
     hideAllPage();
@@ -834,11 +824,9 @@ function openAlbum() {
     pauseMainBGM();
     renderAlbum();
 }
-
 function resetCardFlip() {
     flipCardDom.classList.remove("flipped");
 }
-
 //随机抽卡算法
 function randomPickCard() {
     let totalW = cardDatabase.reduce((sum, item) => sum + item.weight, 0);
@@ -849,7 +837,6 @@ function randomPickCard() {
     }
     return cardDatabase[cardDatabase.length - 1];
 }
-
 function getRarityLightClass(rarity) {
     const map = {
         "UR": "light-ur",
@@ -859,7 +846,6 @@ function getRarityLightClass(rarity) {
     };
     return map[rarity] || "light-sr";
 }
-
 //抽卡动画逻辑完全未改动
 function runPileAnimation() {
     shuffleStage.innerHTML = "";
@@ -900,14 +886,12 @@ function runPileAnimation() {
         showResultDirectly();
     },4200);
 }
-
 function closeShuffleAnim() {
     shuffleLayer.classList.remove("show");
     shuffleStage.style.animation = "";
     finalCard.style.opacity = "0";
     finalCard.className = "final-card";
 }
-
 function startDrawProcess() {
     if(drawTicket <= 0){
         alert("祈愿次数已用尽！");
@@ -925,7 +909,6 @@ function startDrawProcess() {
     }
     runPileAnimation();
 }
-
 //翻牌延迟内播放卡牌语音，动画正常走完
 function showResultDirectly() {
     hideAllPage();
@@ -939,12 +922,10 @@ function showResultDirectly() {
         playCardMusic(getCurrentCard.name);
     }, 380);
 }
-
 function resetFlipBackHome() {
     resetCardFlip();
     setTimeout(() => backMainPage(), 600);
 }
-
 //检测集齐卡牌彩蛋
 function checkAllCardComplete(){
     const normalCardList = cardDatabase.filter(item=>item.isNormalCard).map(c=>c.name);
@@ -955,8 +936,7 @@ function checkAllCardComplete(){
         },400);
     }
 }
-
-//渲染图鉴
+//渲染图鉴：只渲染已经抽到的卡牌，不渲染未获得
 function renderAlbum() {
     albumContainer.innerHTML = "";
     if (obtainOrder.length === 0) {
@@ -979,7 +959,9 @@ function renderAlbum() {
         const cardBox = document.createElement("div");
         cardBox.className = "album-card";
         cardBox.innerHTML = `
-            < img src="${targetCard.img}">
+            <div class="album-card-media">
+                <img src="${targetCard.img}">
+            </div>
             <div class="album-card-name">${targetCard.name}</div>
             <div class="album-card-rarity">${targetCard.rarity}</div>
             <div class="album-count">持有 ×${cardAlbumData[cardName]}</div>
@@ -1004,7 +986,6 @@ function renderAlbum() {
     });
     albumContainer.appendChild(gridWrap);
 }
-
 //一键解锁全部卡牌测试
 function unlockAllCards(){
     cardDatabase.forEach(card=>{
