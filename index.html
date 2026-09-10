@@ -542,6 +542,31 @@
         line-height:1.8;
         letter-spacing:1px;
     }
+    /*=====【新增】视频彩蛋弹窗样式 =====*/
+    .video-modal-overlay{
+        position:fixed;
+        inset:0;
+        background:#000000;
+        z-index:130;
+        display:none;
+        flex-direction:column;
+        align-items:center;
+        justify-content:center;
+        padding:12px;
+    }
+    .video-modal-overlay.open{
+        display:flex;
+    }
+    .video-modal-overlay video{
+        max-width:100%;
+        max-height:85vh;
+        border-radius:8px;
+    }
+    .video-close-tip{
+        color:#cccccc;
+        margin-top:12px;
+        font-size:14px;
+    }
     @media (max-width: 480px) {
         h1 {
             font-size: 28px;
@@ -584,6 +609,8 @@
             <div class="divider-ornate"></div>
             <button class="btn" onclick="startDrawProcess()">单次祈愿抽卡</button>
             <button class="btn" onclick="openAlbum()">卡牌图鉴</button>
+            <!--【新增按钮】观看彩蛋视频，获得10次祈愿 -->
+            <button class="btn" onclick="openEasterVideo()">观看彩蛋视频（+10祈愿次数）</button>
             <div class="divider-ornate"></div>
             <div style="color:#d4b888">剩余祈愿次数：<span id="drawTicket">15</span></div>
         </div>
@@ -629,10 +656,18 @@
     <div class="modal-card-box">
         <img id="modalBigImg">
         <div class="modal-card-name" id="modalCardName"></div>
-        <div class="modal-rarity" id="modalCardRarity"></div>
+        <div class="modal-card-rarity" id="modalCardRarity"></div>
         <div class="close-modal-tip">点击任意位置关闭</div>
     </div>
 </div>
+<!--【新增：彩蛋视频弹窗HTML】 -->
+<div class="video-modal-overlay" id="videoEasterOverlay">
+    <video id="easterVideoPlayer" controls preload="auto">
+        <source src="./easter_video.mp4" type="video/mp4">
+    </video>
+    <div class="video-close-tip">视频播放完毕自动获得10次祈愿；点击视频外黑色区域关闭弹窗</div>
+</div>
+
 <div class="bgm-toggle-btn" onclick="toggleHomeBGM()">🔊</div>
 <div class="peacock-walk-wrap">
     <!-- 替换为你的像素孔雀GIF直链 -->
@@ -685,6 +720,12 @@ let currentCardVoice = null;
 let modalPlayingCard = null;
 let drawTicket = 15;
 const ticketDom = document.getElementById("drawTicket");
+
+//====【新增彩蛋视频JS变量】====
+const videoEasterOverlay = document.getElementById("videoEasterOverlay");
+const easterVideoPlayer = document.getElementById("easterVideoPlayer");
+let videoWatchCompleteRewardGiven = false;
+
 // 统一暂停主BGM（所有非首页操作都会调用，且无自动恢复）
 function pauseMainBGM() {
     homeBgm.pause();
@@ -805,6 +846,31 @@ modalOverlay.onclick = function(){
     modalOverlay.classList.remove("open");
     stopModalCardAudio();
 }
+//====【新增：彩蛋视频逻辑函数】====
+//打开视频弹窗
+function openEasterVideo(){
+    videoWatchCompleteRewardGiven = false;
+    easterVideoPlayer.currentTime = 0;
+    easterVideoPlayer.play().catch(e=>console.log("视频播放触发需要用户交互"));
+    videoEasterOverlay.classList.add("open");
+}
+//视频播放结束事件：给+10抽卡
+easterVideoPlayer.onended = function(){
+    if(!videoWatchCompleteRewardGiven){
+        videoWatchCompleteRewardGiven = true;
+        drawTicket += 10;
+        ticketDom.innerText = drawTicket;
+        alert("观看完毕！获得10次祈愿次数！");
+    }
+};
+//点击黑色遮罩关闭视频弹窗
+videoEasterOverlay.onclick = function(ev){
+    if(ev.target === videoEasterOverlay){
+        easterVideoPlayer.pause();
+        videoEasterOverlay.classList.remove("open");
+    }
+};
+
 function hideAllPage() {
     document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
 }
