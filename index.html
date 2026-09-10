@@ -610,7 +610,7 @@
             <button class="btn" onclick="startDrawProcess()">单次祈愿抽卡</button>
             <button class="btn" onclick="openAlbum()">卡牌图鉴</button>
             <!--【新增按钮】观看彩蛋视频，获得10次祈愿 -->
-            <button class="btn" onclick="openEasterVideo()">观看彩蛋视频（+10祈愿次数）</button>
+            <button class="btn" onclick="openEasterVideo()">观看广告以获得次数</button>
             <div class="divider-ornate"></div>
             <div style="color:#d4b888">剩余祈愿次数：<span id="drawTicket">15</span></div>
         </div>
@@ -640,7 +640,7 @@
         <button class="btn" onclick="openAlbum()">打开图鉴</button>
     </div>
     <div id="pageAlbum" class="page">
-        <h2 style="color:#ffe8b8">卡牌图鉴录</h2>
+        <h2 style="color:#ffe8b8">卡牌图鉴</h2>
         <div class="divider-ornate"></div>
         <div id="albumContainer"></div>
         <br>
@@ -682,8 +682,8 @@
         <div class="parchment-dialog">
             <div class="parchment-inner">
                 <div class="parchment-text">
-                    所有常规卡牌收集完成。<br>
-                    摩诃婆罗多的故事，至此暂告一段落。
+                    诸般业果已然显现，不要执着于所得，亦不要怅惘于未曾得见的命运。<br>
+                    世间万事，皆有它注定的归宿，好好想想吧:)
                 </div>
             </div>
         </div>
@@ -1006,7 +1006,7 @@ function checkAllCardComplete(){
 function renderAlbum() {
     albumContainer.innerHTML = "";
     if (obtainOrder.length === 0) {
-        albumContainer.innerHTML = `<p class="empty-album">图鉴尚且空白，前往祈愿收集史诗卡牌。</p >`;
+        albumContainer.innerHTML = `<p class="empty-album">图鉴尚且空白，前往祈愿收集卡牌。</p >`;
         return;
     }
     const uniqueCardList = [];
