@@ -689,7 +689,6 @@ let modalPlayingCard = null;
 let drawTicket = 18;
 const ticketDom = document.getElementById("drawTicket");
 ticketDom.innerText = drawTicket;
-
 //====【新增彩蛋视频JS变量】====
 const videoEasterOverlay = document.getElementById("videoEasterOverlay");
 const easterVideoPlayer = document.getElementById("easterVideoPlayer");
@@ -697,7 +696,6 @@ let videoWatchCompleteRewardGiven = false;
 let bgmWasPlayingBeforeVideo = false;
 //集齐彩蛋只弹出一次标记
 let albumCompleteHasShown = false;
-
 // 统一暂停主BGM（所有非首页操作都会调用，且无自动恢复）
 function pauseMainBGM() {
     homeBgm.pause();
@@ -742,7 +740,7 @@ function playDrawAudio() {
     drawAnimAudio.currentTime = 0;
     drawAnimAudio.play().catch(e => {});
 }
-// 抽卡结果卡牌语音：播放完毕也不恢复BGM
+//【已修复：增加onerror捕获，解决奎师那音频播放直接停止】
 function playCardMusic(cardName) {
     stopDrawCardAudio();
     const audioInfo = cardAudioList[cardName];
@@ -750,7 +748,13 @@ function playCardMusic(cardName) {
     pauseMainBGM();
     const audio = new Audio(audioInfo.src);
     audio.volume = audioInfo.vol;
-    audio.play().catch(e => console.log("卡牌音频播放异常：", e));
+    audio.onerror = () => {
+        currentCardVoice = null;
+    };
+    audio.play().catch(e => {
+        console.log("卡牌音频播放异常：", e);
+        currentCardVoice = null;
+    });
     currentCardVoice = audio;
 }
 // 停止抽卡页面语音（仅停止音频，不恢复BGM）
@@ -774,7 +778,6 @@ function stopAllCardAudio() {
     stopDrawCardAudio();
     stopModalCardAudio();
 }
-
 //====【修复：彩蛋视频逻辑函数，处理BGM冲突】====
 //打开视频弹窗
 function openEasterVideo(){
@@ -807,7 +810,6 @@ videoEasterOverlay.onclick = function(ev){
         }
     }
 };
-
 //抽卡权重
 const WEIGHT_SR = 9;
 const WEIGHT_SSR = 7;
@@ -852,7 +854,6 @@ modalOverlay.onclick = function(){
     modalOverlay.classList.remove("open");
     stopModalCardAudio();
 }
-
 function hideAllPage() {
     document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
 }
@@ -1015,7 +1016,7 @@ function renderAlbum() {
             <div class="album-card-rarity">${targetCard.rarity}</div>
             <div class="album-count">持有 ×${cardAlbumData[cardName]}</div>
         `;
-        //图鉴点击卡牌：仅暂停BGM，播放完也不恢复
+        //图鉴点击卡牌：仅暂停BGM，播放完也不恢复【修复音频异常】
         cardBox.onclick = function () {
             modalBigImg.src = targetCard.img;
             modalCardName.innerText = targetCard.name;
@@ -1027,7 +1028,13 @@ function renderAlbum() {
             if(audioInfo){
                 const audio = new Audio(audioInfo.src);
                 audio.volume = audioInfo.vol;
-                audio.play().catch(e=>{});
+                audio.onerror = () => {
+                    modalPlayingCard = null;
+                };
+                audio.play().catch(e => {
+                    console.log("图鉴卡牌音频播放异常：", e);
+                    modalPlayingCard = null;
+                });
                 modalPlayingCard = audio;
             }
         };
@@ -1046,6 +1053,8 @@ function unlockAllCards(){
     checkAllCardComplete();
     alert("全部卡牌已解锁，可以查看彩蛋！");
 }
+//挂载到window，F12控制台可以调用
+window.unlockAllCards = unlockAllCards;
  </script>
  </body>
  </html>
